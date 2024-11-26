@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"gutils/gnet"
+	"github.com/kanechoo/gutils/gnet"
 )
 
 func main() {
@@ -22,4 +22,6 @@ func main() {
 	} else {
 		fmt.Printf("ip %s not in network %s\n", ip, cidr)
 	}
+	mtr := gnet.MTR("192.168.0.1", 15, 1, 500)
+	fmt.Println(*mtr)
 }
