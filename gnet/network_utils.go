@@ -5,6 +5,7 @@ import (
 	"github.com/ylwangs/go-mtr/mtr"
 	"log"
 	"net"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -179,6 +180,51 @@ func parseMtrResult(result string) *[]MTRResult {
 		}
 		list = append(list, r)
 	}
+	return &list
+}
+func NetToNet[T net.IPNet | string](cidr T, mask int) *[]net.IPNet {
+	if mask > 32 || mask < 0 {
+		log.Printf("mask is out of range,should be 0-32")
+		return nil
+	}
+	var c net.IPNet
+	switch v := any(cidr).(type) {
+	case string:
+		_, c1, err := net.ParseCIDR(v)
+		if err != nil {
+			log.Printf("parse cidr error : %v", err)
+			return nil
+		}
+		c = *c1
+	case net.IPNet:
+		c = v
+	}
+	m1, _ := c.Mask.Size()
+	if m1 > mask {
+		//当前网络范围小于目标网络范围，无法转换
+		return nil
+	} else if m1 == mask {
+		return &[]net.IPNet{c}
+	}
+	var list []net.IPNet
+	cidrMap := make(map[string]interface{})
+	for ip := c.IP.Mask(c.Mask); c.Contains(ip); inc(ip) {
+		_, n, err := net.ParseCIDR(ip.String() + "/" + strconv.Itoa(mask))
+		if err != nil {
+			continue
+		}
+		cidrMap[n.String()] = nil
+	}
+	for c1 := range cidrMap {
+		_, n, err := net.ParseCIDR(c1)
+		if err != nil {
+			continue
+		}
+		list = append(list, *n)
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].String() < list[j].String()
+	})
 	return &list
 }
 func inc(ip net.IP) {
