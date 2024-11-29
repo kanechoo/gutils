@@ -119,7 +119,7 @@ func (c *Client) GetByAsn(asn int, options ...func(*Options)) (*[]NetBlock, erro
 				withAnnounced = append(withAnnounced, prefix)
 			}
 		}
-		return &withAnnounced, nil
+		return removeDuplicates(&withAnnounced), nil
 	}
 	if c.Options.WithWithdrawn {
 		var withWithdrawn []NetBlock
@@ -128,9 +128,24 @@ func (c *Client) GetByAsn(asn int, options ...func(*Options)) (*[]NetBlock, erro
 				withWithdrawn = append(withWithdrawn, prefix)
 			}
 		}
-		return &withWithdrawn, nil
+		return removeDuplicates(&withWithdrawn), nil
 	}
-	return prefixes, nil
+	return removeDuplicates(prefixes), nil
+}
+
+func removeDuplicates(list *[]NetBlock) *[]NetBlock {
+	if list == nil || len(*list) == 0 {
+		return list
+	}
+	keys := make(map[string]bool)
+	var result []NetBlock
+	for _, item := range *list {
+		if _, value := keys[item.Prefixes]; !value {
+			keys[item.Prefixes] = true
+			result = append(result, item)
+		}
+	}
+	return &result
 }
 
 func (c *Client) parseTextToPrefixes(text *string) (*[]NetBlock, error) {
