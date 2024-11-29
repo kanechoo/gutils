@@ -3,6 +3,8 @@ module github.com/kanechoo/gutils
 go 1.22
 
 require (
+	github.com/PuerkitoBio/goquery v1.9.3 // indirect
+	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/ylwang1122/go-mtr v0.0.0-20190527024405-6786046105b6 // indirect
 	github.com/ylwangs/go-mtr v0.0.0-20190527024405-6786046105b6 // indirect
