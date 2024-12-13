@@ -40,16 +40,19 @@ func doIPToCidr(ip net.IP, mask uint8) (net.IPNet, error) {
 }
 
 // NetSplit 拆分CIDR为IP列表
-func NetSplit[T string | net.IPNet](cidr T) *[]net.IP {
+func NetSplit[T string | net.IPNet](cidr T) (*[]net.IP, error) {
 	switch value := any(cidr).(type) {
 	case string:
+		if value == "" {
+			return nil, errors.New("cidr is empty")
+		}
 		_, ipNet, err := net.ParseCIDR(value)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return doCidrSplit(*ipNet)
+		return doCidrSplit(*ipNet), nil
 	case net.IPNet:
-		return doCidrSplit(value)
+		return doCidrSplit(value), nil
 	default:
 		panic("cidr type is not string or net.IPNet")
 	}
@@ -64,12 +67,18 @@ func doCidrSplit(cidr net.IPNet) *[]net.IP {
 }
 
 // IPInNet 检测IP是否在网络中
-func IPInNet[I string | net.IP, N string | net.IPNet](ip I, cidr N) bool {
+func IPInNet[I string | net.IP, N string | net.IPNet](ip I, cidr N) (bool, error) {
 	var i net.IP
 	var n net.IPNet
 	switch ipType := any(ip).(type) {
 	case string:
+		if ipType == "" {
+			return false, errors.New("ip is empty")
+		}
 		i = net.ParseIP(ipType)
+		if i == nil {
+			return false, errors.New("ip is invalid")
+		}
 	case net.IP:
 		i = ipType
 	default:
@@ -77,15 +86,18 @@ func IPInNet[I string | net.IP, N string | net.IPNet](ip I, cidr N) bool {
 	}
 	switch networkType := any(cidr).(type) {
 	case string:
+		if networkType == "" {
+			return false, errors.New("network is empty")
+		}
 		_, c, err := net.ParseCIDR(networkType)
 		if err != nil {
-			return false
+			return false, err
 		}
 		n = *c
 	case net.IPNet:
 		n = networkType
 	}
-	return n.Contains(i)
+	return n.Contains(i), nil
 }
 
 // MTR 检测网络路径
@@ -182,10 +194,10 @@ func parseMtrResult(result string) *[]MTRResult {
 	}
 	return &list
 }
-func NetToNet[T net.IPNet | string](cidr T, mask int) *[]net.IPNet {
+func NetToNet[T net.IPNet | string](cidr T, mask int) (*[]net.IPNet, error) {
 	if mask > 32 || mask < 0 {
 		log.Printf("mask is out of range,should be 0-32")
-		return nil
+		return nil, errors.New("mask is out of range,should be 0-32")
 	}
 	var c net.IPNet
 	switch v := any(cidr).(type) {
@@ -193,7 +205,7 @@ func NetToNet[T net.IPNet | string](cidr T, mask int) *[]net.IPNet {
 		_, c1, err := net.ParseCIDR(v)
 		if err != nil {
 			log.Printf("parse cidr error : %v", err)
-			return nil
+			return nil, err
 		}
 		c = *c1
 	case net.IPNet:
@@ -202,9 +214,9 @@ func NetToNet[T net.IPNet | string](cidr T, mask int) *[]net.IPNet {
 	m1, _ := c.Mask.Size()
 	if m1 > mask {
 		//当前网络范围小于目标网络范围，无法转换
-		return nil
+		return nil, errors.New("current network range is less than target network range")
 	} else if m1 == mask {
-		return &[]net.IPNet{c}
+		return &[]net.IPNet{c}, nil
 	}
 	var list []net.IPNet
 	cidrMap := make(map[string]interface{})
@@ -225,7 +237,7 @@ func NetToNet[T net.IPNet | string](cidr T, mask int) *[]net.IPNet {
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].String() < list[j].String()
 	})
-	return &list
+	return &list, nil
 }
 func inc(ip net.IP) {
 	for j := len(ip) - 1; j >= 0; j-- {
