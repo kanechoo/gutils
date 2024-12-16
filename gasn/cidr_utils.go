@@ -147,7 +147,6 @@ func (c *Client) ByCountry(country string) (*[]ASNTiny, error) {
 	doc.Find("#asns > tbody > tr").Each(func(i int, selection *goquery.Selection) {
 		as := selection.Find("td:nth-child(1)").Text()
 		name := selection.Find("td:nth-child(2)").Text()
-		strings.TrimPrefix(as, "AS")
 		intASN, err := strconv.Atoi(strings.TrimPrefix(as, "AS"))
 		if err != nil {
 			return
