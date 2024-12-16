@@ -28,7 +28,7 @@ func main() {
 	//}
 	//
 	//fmt.Println("== Test NetToNet ==")
-	//net, err := gnet.NetToNet("23.105.192.0/xxx", 24)
+	//net, err := gnet.NetToNet("10.0.0.0/5", 24)
 	//if err != nil {
 	//	panic(err)
 	//}
@@ -46,7 +46,7 @@ func main() {
 	//}
 	//fmt.Printf("asn: %v\n", *asn)
 	//c2 := gasn.New(gasn.WithRetryTimes(3))
-	//country, err := c2.ByCountry("HK")
+	//country, err := c2.ByCountry("US")
 	//if err != nil {
 	//	panic(err)
 	//}

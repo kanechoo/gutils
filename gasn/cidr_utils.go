@@ -325,10 +325,13 @@ func parseToUpstreamDownstream(text string) (*[]string, *[]string) {
 func defaultHttpClient() *http.Client {
 	proxy := genv.HttpProxy()
 	transport := &http.Transport{
-		Proxy: proxy,
+		Proxy:                 proxy,
+		TLSHandshakeTimeout:   2 * time.Second,
+		IdleConnTimeout:       2 * time.Second,
+		ResponseHeaderTimeout: 5 * time.Second,
 	}
 	return &http.Client{
 		Transport: transport,
-		Timeout:   20 * time.Second,
+		Timeout:   10 * time.Second,
 	}
 }
